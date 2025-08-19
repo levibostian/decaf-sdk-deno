@@ -1,0 +1,23 @@
+{
+  "imports": {
+  },
+  "tasks": {
+    "test": "deno test --allow-all --junit-path reports/junit.xml --coverage=reports/coverage/",
+    "lint": "deno lint --fix"
+  },
+  "fmt": {
+    "lineWidth": 150,
+    "semiColons": false,
+    "include": ["**/*.ts"],
+    "exclude": ["**/*.json", "**/*.md", "**/*.yml", "**/*.yml", "**/*.lock"]
+  },
+  "lint": {
+    "rules": {
+      "exclude": ["require-await"]
+    }
+  },
+  "lock": {
+    "path": "./deno.lock",
+    "frozen": true
+  }
+}
