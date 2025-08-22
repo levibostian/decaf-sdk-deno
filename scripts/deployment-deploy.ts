@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run --quiet --allow-all
+#!/usr/bin/env -S deno run --quiet --allow-all --no-lock
 
 import $ from "jsr:@david/dax";
 import { getDeployStepInput } from "../main.ts"
