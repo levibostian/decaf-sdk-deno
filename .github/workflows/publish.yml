@@ -20,6 +20,9 @@ jobs:
           deno-version: v2.x
       
       - uses: levibostian/decaf@0.2.3
+        env:
+          # required to use 'gh' CLI in my step scripts. 
+          GH_TOKEN: ${{ github.token }}      
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           get_latest_release_current_branch: ./scripts/deployment-get-latest-release.ts
