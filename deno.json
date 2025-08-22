@@ -4,6 +4,15 @@
   "exports": {
     ".": "./main.ts"
   },
+  "publish": {
+    "include": [
+      "LICENSE",
+      "README.md",
+      "main.ts",
+      "deno.json",
+      "deno.lock"
+    ]
+  },
   "imports": {},
   "tasks": {
     "test": "deno test --allow-all --junit-path reports/junit.xml --coverage=reports/coverage/",
