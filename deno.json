@@ -19,5 +19,9 @@
     "rules": {
       "exclude": ["require-await"]
     }
+  },
+  "lock": {
+    "path": "./deno.lock",
+    "frozen": true
   }
 }
