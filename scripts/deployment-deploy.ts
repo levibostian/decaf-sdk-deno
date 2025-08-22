@@ -10,7 +10,8 @@ const input = getDeployStepInput()
 const argsToDenoPublish = [
   "publish",
   "--set-version",
-  input.nextVersionName
+  input.nextVersionName,
+  "--allow-dirty"
 ]
 
 if (input.testMode) {
