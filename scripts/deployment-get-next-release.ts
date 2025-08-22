@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run --quiet --allow-all
+#!/usr/bin/env -S deno run --quiet --allow-all --no-lock
 
 import { getNextReleaseVersionStepInput, setNextReleaseVersionStepOutput } from "../main.ts"
 import * as semver from "jsr:@std/semver"

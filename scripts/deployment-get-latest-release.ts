@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run --quiet --allow-all
+#!/usr/bin/env -S deno run --quiet --allow-all --no-lock
 
 import { getLatestReleaseStepInput, setLatestReleaseStepOutput } from "../main.ts"
 import $ from "jsr:@david/dax";
