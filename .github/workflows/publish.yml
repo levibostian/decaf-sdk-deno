@@ -22,6 +22,6 @@ jobs:
       - uses: levibostian/decaf@0.2.3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          get_latest_release_current_branch: ./scripts/deployment-get-latest-release
-          get_next_release_version: ./scripts/deployment-get-next-release
-          deploy: ./scripts/deployment-deploy
+          get_latest_release_current_branch: ./scripts/deployment-get-latest-release.ts
+          get_next_release_version: ./scripts/deployment-get-next-release.ts
+          deploy: ./scripts/deployment-deploy.ts
