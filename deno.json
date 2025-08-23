@@ -13,7 +13,9 @@
       "deno.lock"
     ]
   },
-  "imports": {},
+  "imports": {
+    "@cross/env": "jsr:@cross/env@^1.0.3"
+  },
   "tasks": {
     "test": "deno test --allow-all --junit-path reports/junit.xml --coverage=reports/coverage/",
     "lint": "deno lint --fix"
