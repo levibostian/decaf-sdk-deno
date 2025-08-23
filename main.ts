@@ -1,4 +1,5 @@
-
+import { readFileSync, writeFileSync } from "./fs.ts"
+import { getEnv } from "jsr:@cross/env";
 
 /**
  * Represents a Git commit with all its metadata and statistics
@@ -114,9 +115,9 @@ export const getDeployStepInput = (): DeployStepInput => {
 }
 
 const getInput = <T>(): T => {
-  const filePath = Deno.env.get("DATA_FILE_PATH")
+  const filePath = getEnv("DATA_FILE_PATH")
   if (!filePath) throw new Error("DATA_FILE_PATH environment variable is not set.")
-  const fileContents = Deno.readTextFileSync(filePath)
+  const fileContents = readFileSync(filePath, "utf-8")
   return JSON.parse(fileContents)
 }
 
@@ -129,7 +130,7 @@ export const setNextReleaseVersionStepOutput = (output: GetNextReleaseVersionSte
 }
 
 const setOutput = (output: GetLatestReleaseStepOutput | GetNextReleaseVersionStepOutput): void => {
-  const filePath = Deno.env.get("DATA_FILE_PATH")
+  const filePath = getEnv("DATA_FILE_PATH")
   if (!filePath) throw new Error("DATA_FILE_PATH environment variable is not set.")
-  Deno.writeTextFileSync(filePath, JSON.stringify(output))
+  writeFileSync(filePath, JSON.stringify(output))
 }
