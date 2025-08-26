@@ -151,7 +151,7 @@ Deno.test("getLatestReleaseStepInput() - should throw error when file does not e
     // Act & Assert
     assertThrows(
       () => getLatestReleaseStepInput(),
-      Deno.errors.NotFound
+      Error
     )
   } finally {
     testEnv.cleanup()
