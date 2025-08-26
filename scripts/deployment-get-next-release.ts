@@ -10,7 +10,7 @@ if (!lastReleaseVersion) {
   console.log("No last release found, returning first release version.")
 
   setNextReleaseVersionStepOutput({
-    version: "0.1.0"
+    version: "0.1.0",
   })
   Deno.exit(0)
 }
@@ -49,5 +49,5 @@ if (versionBumpsForEachCommit.length === 0) {
 }
 
 setNextReleaseVersionStepOutput({
-  version: semver.format(semver.increment(lastReleaseSemanticVersion, nextReleaseBump))
+  version: semver.format(semver.increment(lastReleaseSemanticVersion, nextReleaseBump)),
 })

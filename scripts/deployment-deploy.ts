@@ -1,17 +1,17 @@
 #!/usr/bin/env -S deno run --quiet --allow-all --no-lock
 
-import $ from "jsr:@david/dax";
+import $ from "jsr:@david/dax"
 import { getDeployStepInput } from "../main.ts"
 
 const input = getDeployStepInput()
 
-// Deno publish 
+// Deno publish
 
 const argsToDenoPublish = [
   "publish",
   "--set-version",
   input.nextVersionName,
-  "--allow-dirty"
+  "--allow-dirty",
 ]
 
 if (input.testMode) {
@@ -21,7 +21,7 @@ if (input.testMode) {
 // https://github.com/dsherret/dax#providing-arguments-to-a-command
 await $`deno ${argsToDenoPublish}`.printCommand()
 
-// GitHub Release 
+// GitHub Release
 
 const argsToCreateGithubRelease = [
   `release`,
@@ -30,7 +30,7 @@ const argsToCreateGithubRelease = [
   `--generate-notes`,
   `--latest`,
   `--target`,
-  'main'
+  "main",
 ]
 
 if (input.testMode) {
@@ -41,4 +41,3 @@ if (input.testMode) {
 }
 
 await $`gh ${argsToCreateGithubRelease}`.printCommand()
-

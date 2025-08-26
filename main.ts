@@ -1,8 +1,18 @@
-import { readFileSync, writeFileSync } from "./fs.ts"
 import { getEnv } from "@cross/env"
+/*
+ * File system code
+ * 
+ * Be able to read and write files for Deno, Bun, and node. 
+ * Got this code from: https://github.com/cross-org/fs but the code
+ * is so small in size, not worth importing.
+ */
+import { readFileSync as nodeReadFileSync, writeFileSync as nodeWriteFileSync } from "node:fs"
 
 /**
- * Represents a Git commit with all its metadata and statistics
+ * Represents a Git commit with all its metadata and statistics.
+ *
+ * This interface provides a comprehensive view of a Git commit including
+ * author information, file changes, statistics, and branch/tag associations.
  */
 export interface GitCommit {
   /** The commit title/subject line (first line of commit message) */
@@ -71,30 +81,70 @@ export interface GitCommit {
   }>
 }
 
+/**
+ * Output interface for the get latest release step.
+ *
+ * Contains the version name and commit SHA of the latest release found.
+ */
 export interface GetLatestReleaseStepOutput {
+  /** The version name of the latest release (e.g., "1.2.3", "v2.0.0") */
   versionName: string
+  /** The full SHA hash of the commit associated with the latest release */
   commitSha: string
 }
 
+/**
+ * Input interface for the get latest release step.
+ *
+ * Provides all the necessary Git information and configuration needed
+ * to determine the latest release in a repository.
+ */
 export interface GetLatestReleaseStepInput {
+  /** The name of the current Git branch being processed */
   gitCurrentBranch: string
+  /** The owner/organization name of the Git repository */
   gitRepoOwner: string
+  /** The name of the Git repository */
   gitRepoName: string
+  /** Whether the step is running in test mode (affects behavior) */
   testMode: boolean
+  /** Array of all commits in the current branch */
   gitCommitsCurrentBranch: GitCommit[]
+  /** Object mapping branch names to their respective commit arrays */
   gitCommitsAllLocalBranches: { [branchName: string]: GitCommit[] }
 }
 
+/**
+ * Input interface for the get next release version step.
+ *
+ * Extends {@link GetLatestReleaseStepInput} with additional information about
+ * the last release and commits since that release.
+ */
 export interface GetNextReleaseVersionStepInput extends GetLatestReleaseStepInput {
+  /** The latest release information, or null if no previous release exists */
   lastRelease: GetLatestReleaseStepOutput | null
+  /** Array of commits that have been made since the last release */
   gitCommitsSinceLastRelease: GitCommit[]
 }
 
+/**
+ * Output interface for the get next release version step.
+ *
+ * Contains the calculated version string for the next release.
+ */
 export interface GetNextReleaseVersionStepOutput {
+  /** The calculated version string for the next release (e.g., "1.3.0", "v2.1.0") */
   version: string
 }
 
+/**
+ * Input interface for the deploy step.
+ *
+ * Extends {@link GetNextReleaseVersionStepInput} with the calculated next version name
+ * that should be used for deployment.
+ */
 export interface DeployStepInput extends GetNextReleaseVersionStepInput {
+  /** The version name that will be used for the next release deployment */
   nextVersionName: string
 }
 
@@ -102,14 +152,65 @@ export interface DeployStepInput extends GetNextReleaseVersionStepInput {
 // Main application code
 // ============================================================================
 
+/**
+ * Gets the input data for a "get latest release" step.
+ *
+ * This function is used in decaf step scripts that need to
+ * determine the latest release in a repository.
+ *
+ * @returns The parsed input data containing Git repository information and commit history
+ *
+ * @example
+ * ```ts
+ * const input = getLatestReleaseStepInput();
+ * console.log(`Processing repository: ${input.gitRepoOwner}/${input.gitRepoName}`);
+ * console.log(`Current branch: ${input.gitCurrentBranch}`);
+ * ```
+ */
 export const getLatestReleaseStepInput = (): GetLatestReleaseStepInput => {
   return getInput<GetLatestReleaseStepInput>()
 }
 
+/**
+ * Gets the input data for a "get next release version" step.
+ *
+ * This function provides information about the repository state
+ * and the last release, which is needed to calculate the next version number.
+ *
+ * @returns The parsed input data including last release info and commits since last release
+ *
+ * @example
+ * ```ts
+ * const input = getNextReleaseVersionStepInput();
+ * if (input.lastRelease) {
+ *   console.log(`Last release: ${input.lastRelease.versionName}`);
+ * } else {
+ *   console.log("No previous release found");
+ * }
+ * ```
+ */
 export const getNextReleaseVersionStepInput = (): GetNextReleaseVersionStepInput => {
   return getInput<GetNextReleaseVersionStepInput>()
-} 
+}
 
+/**
+ * Gets the input data for a "deploy" step.
+ *
+ * This function provides all the information needed to
+ * perform a deployment, including the calculated next version name.
+ *
+ * @returns The parsed input data containing deployment information and version details
+ *
+ * @example
+ * ```ts
+ * const input = getDeployStepInput();
+ * if (input.testMode) {
+ *   console.log("Running in test mode");
+ * }
+ * console.log(`Deploying version: ${input.nextVersionName}`);
+ * console.log(`Repository: ${input.gitRepoOwner}/${input.gitRepoName}`);
+ * ```
+ */
 export const getDeployStepInput = (): DeployStepInput => {
   return getInput<DeployStepInput>()
 }
@@ -117,14 +218,44 @@ export const getDeployStepInput = (): DeployStepInput => {
 const getInput = <T>(): T => {
   const filePath = getEnv("DATA_FILE_PATH")
   if (!filePath) throw new Error("DATA_FILE_PATH environment variable is not set.")
-  const fileContents = readFileSync(filePath, "utf-8")
+  const fileContents = nodeReadFileSync(filePath, "utf-8")
   return JSON.parse(fileContents)
 }
 
+/**
+ * Sets the output data for a "get latest release" step.
+ *
+ * This function should be called at the end of a step script to provide results back to decaf.
+ *
+ * @param output The output data containing version name and commit SHA
+ *
+ * @example
+ * ```ts
+ * setLatestReleaseStepOutput({
+ *   versionName: "1.2.3",
+ *   commitSha: "abc123def456789"
+ * });
+ * ```
+ */
 export const setLatestReleaseStepOutput = (output: GetLatestReleaseStepOutput): void => {
   setOutput(output)
 }
 
+/**
+ * Sets the output data for a "get next release version" step.
+ *
+ * This function should be called at the end of a step script to provide the calculated
+ * next version back to decaf.
+ *
+ * @param output The output data containing the calculated next version
+ *
+ * @example
+ * ```ts
+ * setNextReleaseVersionStepOutput({
+ *   version: "2.0.0"
+ * });
+ * ```
+ */
 export const setNextReleaseVersionStepOutput = (output: GetNextReleaseVersionStepOutput): void => {
   setOutput(output)
 }
@@ -132,5 +263,5 @@ export const setNextReleaseVersionStepOutput = (output: GetNextReleaseVersionSte
 const setOutput = (output: GetLatestReleaseStepOutput | GetNextReleaseVersionStepOutput): void => {
   const filePath = getEnv("DATA_FILE_PATH")
   if (!filePath) throw new Error("DATA_FILE_PATH environment variable is not set.")
-  writeFileSync(filePath, JSON.stringify(output))
+  nodeWriteFileSync(filePath, JSON.stringify(output))
 }
