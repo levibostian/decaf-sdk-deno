@@ -24,6 +24,7 @@ jobs:
           # required to use 'gh' CLI in my step scripts. 
           GH_TOKEN: ${{ github.token }}      
         with:
+          simulated_merge_type: 'rebase'
           github_token: ${{ secrets.GITHUB_TOKEN }}
           get_latest_release_current_branch: ./scripts/deployment-get-latest-release.ts
           get_next_release_version: ./scripts/deployment-get-next-release.ts
