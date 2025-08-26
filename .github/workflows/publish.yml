@@ -13,6 +13,10 @@ jobs:
       id-token: write # required by jsr for publishing package 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # workaround to get all the git tags. needed because there is a bug in decaf right now where it doesn't find the tags when it parses commits 
+          # and provides them to step scripts. 
+          fetch-depth: 0
 
       - name: Set up Deno
         uses: denoland/setup-deno@v1
