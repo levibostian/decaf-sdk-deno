@@ -17,9 +17,13 @@ const latestRelease: {
   tagName: string
 } = JSON.parse(latestReleaseJsonText)
 
+console.log(`latest release found: ${latestRelease.name} (${latestRelease.tagName})`)
+
 const commitMatchingRelease = input.gitCommitsCurrentBranch.find((commit) => {
   return commit.tags?.includes(latestRelease.tagName)
 })!
+
+console.log(`commit matching release found: ${commitMatchingRelease.title} (${commitMatchingRelease.sha})`)
 
 setLatestReleaseStepOutput({
   versionName: latestRelease.name,
