@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from "./fs.ts"
-import { getEnv } from "jsr:@cross/env";
+import { getEnv } from "@cross/env"
 
 /**
  * Represents a Git commit with all its metadata and statistics

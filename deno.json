@@ -8,9 +8,12 @@
     "include": [
       "LICENSE",
       "README.md",
-      "main.ts",
+      "*.ts",
       "deno.json",
       "deno.lock"
+    ],
+    "exclude": [
+      "*.test.ts"
     ]
   },
   "imports": {
