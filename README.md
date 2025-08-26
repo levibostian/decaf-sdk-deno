@@ -1,26 +1,12 @@
-# Decaf SDK for Deno & node 
+# decaf SDK for Deno, Bun & node 
 
-A simple SDK for building Decaf step scripts with ease. This SDK provides convenient functions to get input data and set output data for different types of deployment pipeline steps.
+A simple SDK for building [decaf](https://github.com/levibostian/decaf/) step scripts with ease. This SDK provides convenient functions to get input data and set output data for different types of deployment pipeline steps.
 
 # Getting started 
 
-## Installation
+## Install 
 
-### Deno
-
-```typescript
-import {...} from "jsr:@levibostian/decaf-sdk";
-```
-
-### Node.js
-
-```bash
-npx jsr add @levibostian/decaf-sdk
-```
-
-```typescript
-import {...} from "@levibostian/decaf-sdk";
-```
+This SDK is [hosted on jsr](https://jsr.io/@levibostian/decaf-sdk). On [this webpage](https://jsr.io/@levibostian/decaf-sdk), you will see a "Use with" dropdown that guides you through how to install for node, Deno, and Bun.
 
 ## Call input & output functions 
 
@@ -52,5 +38,3 @@ The SDK exports the following functions:
 - `setNextReleaseVersionStepOutput()` - Set output data for next release version steps
 - `getDeployStepInput()` - Get input data for deploy steps
 - ~~`setDeployStepOutput()`~~ - Note: decaf does not support setting output for deploy step
-
-
