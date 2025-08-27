@@ -13,17 +13,13 @@ jobs:
       id-token: write # required by jsr for publishing package 
     steps:
       - uses: actions/checkout@v4
-        with:
-          # workaround to get all the git tags. needed because there is a bug in decaf right now where it doesn't find the tags when it parses commits 
-          # and provides them to step scripts. 
-          fetch-depth: 0
 
       - name: Set up Deno
         uses: denoland/setup-deno@v1
         with:
           deno-version: v2.x
       
-      - uses: levibostian/decaf@0.2.3
+      - uses: levibostian/decaf@0.2.4
         env:
           # required to use 'gh' CLI in my step scripts. 
           GH_TOKEN: ${{ github.token }}      
