@@ -19,11 +19,12 @@ jobs:
         with:
           deno-version: v2.x
       
-      - uses: levibostian/decaf@0.2.4
+      - uses: levibostian/decaf@fix-main-branch-not-included
         env:
           # required to use 'gh' CLI in my step scripts. 
           GH_TOKEN: ${{ github.token }}      
         with:
+          compile_binary: true
           simulated_merge_type: 'rebase'
           github_token: ${{ secrets.GITHUB_TOKEN }}
           get_latest_release_current_branch: ./scripts/deployment-get-latest-release.ts
