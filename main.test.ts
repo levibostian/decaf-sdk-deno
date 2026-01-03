@@ -1,4 +1,5 @@
-import { assertEquals, assertThrows } from "jsr:@std/assert"
+// deno-lint-ignore-file no-import-prefix
+import { assertEquals, assertThrows } from "jsr:@std/assert@1.0.16"
 import {
   getLatestReleaseStepInput,
   getNextReleaseVersionStepInput,

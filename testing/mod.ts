@@ -1,6 +1,7 @@
 // a decaf script test runner essentially. Copied from decaf: https://github.com/levibostian/decaf/blob/a0e324f7209c0f37b9d275b7259fcefd591a17c6/steps/get-next-release.test.ts#L4
 
 import type { DeployStepInput, GetLatestReleaseStepInput, GetLatestReleaseStepOutput, GetNextReleaseVersionStepInput, GetNextReleaseVersionStepOutput } from "../main.ts"
+import ansiRegex from "ansi-regex"
 
 export async function runGetLatestReleaseScript(
   runScriptShellCommand: string,
@@ -52,7 +53,8 @@ const inputFilePath = await writeInputToTempFile(input)
 
 // TODO: use this in each function. 
 export interface RunScriptOptions {
-  displayStdout?: boolean  
+  displayStdout?: boolean
+  removeAnsiCodes?: boolean
 }
 
 const writeInputToTempFile = async (input: unknown): Promise<string> => {
@@ -70,8 +72,15 @@ const defaultEnvVariables = {
 
 export async function runScript<TOutput>(
   runScriptShellCommand: string,
-  env: Record<string, string>
+  env: Record<string, string>,
 ): Promise<{ code: number; output: TOutput | null; stdout: string[] }> {
+  const inputFilePath = env["DATA_FILE_PATH"]
+  if (!inputFilePath) {
+    throw new Error("DATA_FILE_PATH environment variable is not set.")
+  }
+
+  const inputFileContentsBeforeRun = await Deno.readTextFile(inputFilePath)
+
   // This code is the same as exec.ts in decaf.
   // using 'sh -c' allows us to run complex commands that contain &&, |, >, etc.
   // without it, commands like `echo "test" >> output.txt` would not work. you could only do simple commands like `echo "test"`.
@@ -91,9 +100,9 @@ export async function runScript<TOutput>(
       write(chunk) {
         const decodedChunk = new TextDecoder().decode(chunk).trimEnd()
 
-        console.log(decodedChunk)
-
         combinedOutput.push(decodedChunk)
+        
+          console.log(decodedChunk)
       },
     }),
   )
@@ -102,22 +111,23 @@ export async function runScript<TOutput>(
       write(chunk) {
         const decodedChunk = new TextDecoder().decode(chunk).trimEnd()
 
-        console.log(decodedChunk)
-
         combinedOutput.push(decodedChunk)
+        
+          console.log(decodedChunk)
       },
     }),
   )
 
   const code = (await child.status).code
 
-  const inputFilePath = env["DATA_FILE_PATH"]
-  const inputFileContents = await Deno.readTextFile(inputFilePath)
-  const outputFileContents = await Deno.readTextFile(inputFilePath)
+  const outputFileContentsAfterRun = await Deno.readTextFile(inputFilePath)
   let output: TOutput | null = null
-  if (outputFileContents != inputFileContents) { // if unchanged, no output written. keep output as null
-    output = JSON.parse(outputFileContents)
+  if (outputFileContentsAfterRun !== inputFileContentsBeforeRun) {
+    output = JSON.parse(outputFileContentsAfterRun) as TOutput
   }
 
-  return { code, output, stdout: combinedOutput }
+  const combinedOutputWithoutAnsiCodes = combinedOutput.map((line) => line.replace(ansiRegex(), ""))
+
+  return { code, output, stdout: combinedOutputWithoutAnsiCodes }
 }
+
