@@ -18,10 +18,12 @@
   },
   "imports": {
     "@cross/env": "jsr:@cross/env@^1.0.3",
+    "@cross/fs": "jsr:@cross/fs@^0.1.13",
+    "@cross/utils": "jsr:@cross/utils@^0.16.0",
     "ansi-regex": "npm:ansi-regex@^6.2.2"
   },
   "tasks": {
-    "test": "deno test --allow-all --junit-path reports/junit.xml --coverage=reports/coverage/",
+    "test": "deno test --allow-all --junit-path reports/junit.xml --coverage=reports/coverage/ --coverage-raw-data-only && deno coverage reports/coverage/ --include=$(pwd)",
     "lint": "deno lint --fix"
   },
   "fmt": {
