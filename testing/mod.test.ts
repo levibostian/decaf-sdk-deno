@@ -280,3 +280,182 @@ Deno.test("non-zero exit code returns the the exit code", async () => {
     assertEquals(stdout, ["exiting with code 2"])
 })
 
+Deno.test("options.removeAnsiCodes: false preserves ansi codes in stdout", async () => {
+  const scriptPath = createScript(`
+    console.log("\u001b[31mred\u001b[0m");
+  `)
+
+  const { stdout: getLatestStdout } = await runGetLatestReleaseScript(
+    `deno run --allow-env "${scriptPath}"`,
+    {
+      gitCurrentBranch: "main",
+      gitRepoOwner: "your-github-username",
+      gitRepoName: "your-repo-name",
+      testMode: true,
+      gitCommitsCurrentBranch: [],
+      gitCommitsAllLocalBranches: {},
+    },
+    { removeAnsiCodes: false }
+  )
+
+  assertEquals(getLatestStdout, ["\u001b[31mred\u001b[0m"])
+
+  const { stdout: getNextStdout } = await runGetNextReleaseVersionScript(
+    `deno run --allow-env "${scriptPath}"`,
+    {
+      gitCurrentBranch: "main",
+      gitRepoOwner: "your-github-username",
+      gitRepoName: "your-repo-name",
+      testMode: true,
+      gitCommitsCurrentBranch: [],
+      gitCommitsAllLocalBranches: {},
+      lastRelease: null,
+      gitCommitsSinceLastRelease: [],
+    },
+    { removeAnsiCodes: false }
+  )
+
+  assertEquals(getNextStdout, ["\u001b[31mred\u001b[0m"])
+
+  const { stdout: deployStdout } = await runDeployScript(
+    `deno run --allow-env "${scriptPath}"`,
+    {
+      gitCurrentBranch: "main",
+      gitRepoOwner: "your-github-username",
+      gitRepoName: "your-repo-name",
+      testMode: true,
+      gitCommitsCurrentBranch: [],
+      gitCommitsAllLocalBranches: {},
+      lastRelease: null,
+      gitCommitsSinceLastRelease: [],
+      nextVersionName: "1.0.0",
+    },
+    { removeAnsiCodes: false }
+  )
+
+  assertEquals(deployStdout, ["\u001b[31mred\u001b[0m"])
+})
+
+Deno.test("options.extraEnvVariables passes custom environment variables to script", async () => {
+  const scriptPath = createScript(`
+    console.log(Deno.env.get("CUSTOM_VAR_1"));
+    console.log(Deno.env.get("CUSTOM_VAR_2"));
+  `)
+
+  const { stdout: getLatestStdout } = await runGetLatestReleaseScript(
+    `deno run --allow-env "${scriptPath}"`,
+    {
+      gitCurrentBranch: "main",
+      gitRepoOwner: "your-github-username",
+      gitRepoName: "your-repo-name",
+      testMode: true,
+      gitCommitsCurrentBranch: [],
+      gitCommitsAllLocalBranches: {},
+    },
+    {
+      extraEnvVariables: {
+        CUSTOM_VAR_1: "value1",
+        CUSTOM_VAR_2: "value2",
+      },
+    }
+  )
+
+  assertEquals(getLatestStdout, ["value1", "value2"])
+
+  const { stdout: getNextStdout } = await runGetNextReleaseVersionScript(
+    `deno run --allow-env "${scriptPath}"`,
+    {
+      gitCurrentBranch: "main",
+      gitRepoOwner: "your-github-username",
+      gitRepoName: "your-repo-name",
+      testMode: true,
+      gitCommitsCurrentBranch: [],
+      gitCommitsAllLocalBranches: {},
+      lastRelease: null,
+      gitCommitsSinceLastRelease: [],
+    },
+    {
+      extraEnvVariables: {
+        CUSTOM_VAR_1: "value1",
+        CUSTOM_VAR_2: "value2",
+      },
+    }
+  )
+
+  assertEquals(getNextStdout, ["value1", "value2"])
+
+  const { stdout: deployStdout } = await runDeployScript(
+    `deno run --allow-env "${scriptPath}"`,
+    {
+      gitCurrentBranch: "main",
+      gitRepoOwner: "your-github-username",
+      gitRepoName: "your-repo-name",
+      testMode: true,
+      gitCommitsCurrentBranch: [],
+      gitCommitsAllLocalBranches: {},
+      lastRelease: null,
+      gitCommitsSinceLastRelease: [],
+      nextVersionName: "1.0.0",
+    },
+    {
+      extraEnvVariables: {
+        CUSTOM_VAR_1: "value1",
+        CUSTOM_VAR_2: "value2",
+      },
+    }
+  )
+
+  assertEquals(deployStdout, ["value1", "value2"])
+})
+
+Deno.test("options: combining removeAnsiCodes and extraEnvVariables", async () => {
+  const scriptPath = createScript(`
+    console.log("\u001b[31m" + Deno.env.get("COLOR_VAR") + "\u001b[0m");
+  `)
+
+  const { stdout } = await runGetLatestReleaseScript(
+    `deno run --allow-env "${scriptPath}"`,
+    {
+      gitCurrentBranch: "main",
+      gitRepoOwner: "your-github-username",
+      gitRepoName: "your-repo-name",
+      testMode: true,
+      gitCommitsCurrentBranch: [],
+      gitCommitsAllLocalBranches: {},
+    },
+    {
+      removeAnsiCodes: false,
+      extraEnvVariables: {
+        COLOR_VAR: "colored-output",
+      },
+    }
+  )
+
+  assertEquals(stdout, ["\u001b[31mcolored-output\u001b[0m"])
+})
+
+Deno.test("options.extraEnvVariables can override default environment variables", async () => {
+  const scriptPath = createScript(`
+    console.log(Deno.env.get("INPUT_GITHUB_TOKEN"));
+  `)
+
+  const { stdout } = await runGetLatestReleaseScript(
+    `deno run --allow-env "${scriptPath}"`,
+    {
+      gitCurrentBranch: "main",
+      gitRepoOwner: "your-github-username",
+      gitRepoName: "your-repo-name",
+      testMode: true,
+      gitCommitsCurrentBranch: [],
+      gitCommitsAllLocalBranches: {},
+    },
+    {
+      extraEnvVariables: {
+        INPUT_GITHUB_TOKEN: "custom-token-xyz",
+      },
+    }
+  )
+
+  assertEquals(stdout, ["custom-token-xyz"])
+})
+

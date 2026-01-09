@@ -13,15 +13,13 @@ import { spawn, stripAnsi } from "@cross/utils"
 export async function runGetLatestReleaseScript(
   runScriptShellCommand: string,
   input: GetLatestReleaseStepInput,
+  options?: RunScriptOptions,
 ): Promise<{ code: number; output: GetLatestReleaseStepOutput | null; stdout: string[] }> {
   const inputFilePath = await writeInputToTempFile(input)
 
-  const env = {
-    ...defaultEnvVariables,
-    DATA_FILE_PATH: inputFilePath,
-  }
+  const env = getEnvironmentVariables(inputFilePath, options)
 
-  const { code, output, stdout } = await runScript<GetLatestReleaseStepOutput>(runScriptShellCommand, env)
+  const { code, output, stdout } = await runScript<GetLatestReleaseStepOutput>(runScriptShellCommand, env, options?.removeAnsiCodes)
 
   return { code, output, stdout }
 }
@@ -29,15 +27,13 @@ export async function runGetLatestReleaseScript(
 export async function runGetNextReleaseVersionScript(
   runScriptShellCommand: string,
   input: GetNextReleaseVersionStepInput,
+  options?: RunScriptOptions,
 ): Promise<{ code: number; output: GetNextReleaseVersionStepOutput | null; stdout: string[] }> {
   const inputFilePath = await writeInputToTempFile(input)
 
-  const env = {
-    ...defaultEnvVariables,
-    DATA_FILE_PATH: inputFilePath,
-  }
+  const env = getEnvironmentVariables(inputFilePath, options)
 
-  const { code, output, stdout } = await runScript<GetNextReleaseVersionStepOutput>(runScriptShellCommand, env)
+  const { code, output, stdout } = await runScript<GetNextReleaseVersionStepOutput>(runScriptShellCommand, env, options?.removeAnsiCodes)
 
   return { code, output, stdout }
 }
@@ -45,23 +41,20 @@ export async function runGetNextReleaseVersionScript(
 export async function runDeployScript(
   runScriptShellCommand: string,
   input: DeployStepInput,
+  options?: RunScriptOptions,
 ): Promise<{ code: number; stdout: string[] }> {
 const inputFilePath = await writeInputToTempFile(input)
 
-  const env = {
-    ...defaultEnvVariables,
-    DATA_FILE_PATH: inputFilePath,
-  }
+  const env = getEnvironmentVariables(inputFilePath, options)
 
-  const { code, stdout } = await runScript<unknown>(runScriptShellCommand, env)
+  const { code, stdout } = await runScript<unknown>(runScriptShellCommand, env, options?.removeAnsiCodes)
 
   return { code, stdout }
 }
 
-// TODO: use this in each function.
 export interface RunScriptOptions {
-  displayStdout?: boolean
   removeAnsiCodes?: boolean
+  extraEnvVariables?: Record<string, string>
 }
 
 const writeInputToTempFile = async (input: unknown): Promise<string> => {
@@ -69,11 +62,6 @@ const writeInputToTempFile = async (input: unknown): Promise<string> => {
   const inputFileContents = JSON.stringify(input)
   await writeFile(tempFilePath, inputFileContents, "utf-8")
   return tempFilePath
-}
-
-const defaultEnvVariables = {
-  INPUT_GITHUB_TOKEN: "abcd1234",
-  NO_COLOR: "1", // disable color output (anscii) for easier testing. https://docs.deno.com/api/deno/~/Deno.noColor
 }
 
 const splitLines = (text: string): string[] => {
@@ -88,9 +76,22 @@ const splitLines = (text: string): string[] => {
   return lines
 }
 
-export async function runScript<TOutput>(
+const getEnvironmentVariables = (
+  inputFilePath: string,
+  options?: RunScriptOptions,
+): Record<string, string> => {
+  return {
+    INPUT_GITHUB_TOKEN: "abcd1234",
+    NO_COLOR: "1", // disable color output (ansi) for easier testing. https://docs.deno.com/api/deno/~/Deno.noColor
+    DATA_FILE_PATH: inputFilePath,
+    ...(options?.extraEnvVariables ?? {}),
+  }
+}
+
+async function runScript<TOutput>(
   runScriptShellCommand: string,
   env: Record<string, string>,
+  removeAnsiCodes = true,
 ): Promise<{ code: number; output: TOutput | null; stdout: string[] }> {
   const inputFilePath = env["DATA_FILE_PATH"]
   if (!inputFilePath) {
@@ -104,7 +105,7 @@ export async function runScript<TOutput>(
   // We append "2>&1" to preserve the relative ordering between stdout and stderr.
   const { code, stdout } = await spawn(["sh", "-c", `${runScriptShellCommand} 2>&1`], env)
 
-  const combinedOutput = splitLines(stdout)
+  let combinedOutput = splitLines(stdout)
 
   const outputFileContentsAfterRun = await readFile(inputFilePath, "utf-8")
   let output: TOutput | null = null
@@ -112,8 +113,10 @@ export async function runScript<TOutput>(
     output = JSON.parse(outputFileContentsAfterRun) as TOutput
   }
 
-  const combinedOutputWithoutAnsiCodes = combinedOutput.map((line) => stripAnsi(line))
+  if (removeAnsiCodes) {
+    combinedOutput = combinedOutput.map((line) => stripAnsi(line))
+  }
 
-  return { code, output, stdout: combinedOutputWithoutAnsiCodes }
+  return { code, output, stdout: combinedOutput }
 }
 
