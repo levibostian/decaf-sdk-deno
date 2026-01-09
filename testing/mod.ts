@@ -106,7 +106,7 @@ async function runScript<TOutput>(
     write(chunk: Uint8Array) {
       const text = new TextDecoder().decode(chunk)
       if (displayStdout) {
-        console.log(text)
+        console.log(text.slice(0, -1)) // remove extra new line added by writable stream
       }
 
       accumulatedOutput += text
@@ -117,7 +117,7 @@ async function runScript<TOutput>(
     write(chunk: Uint8Array) {
       const text = new TextDecoder().decode(chunk)
       if (displayStdout) {
-        console.error(text)
+        console.error(text.slice(0, -1)) // remove extra new line added by writable stream
       }
 
       accumulatedOutput += text
