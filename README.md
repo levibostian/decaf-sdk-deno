@@ -28,7 +28,7 @@ setLatestReleaseStepOutput({
 });
 ```
 
-## Available Functions
+### Available Functions
 
 The SDK exports the following functions:
 
@@ -38,3 +38,45 @@ The SDK exports the following functions:
 - `setNextReleaseVersionStepOutput()` - Set output data for next release version steps
 - `getDeployStepInput()` - Get input data for deploy steps
 - ~~`setDeployStepOutput()`~~ - Note: decaf does not support setting output for deploy step
+
+## Testing Your Scripts
+
+The SDK provides a testing module to help you write tests for your decaf scripts. This module allows you to run your scripts in a test environment and verify their behavior. All of the `runStep()` functions will run your script in a temporary environment, passing in the provided input data and capturing the output.
+
+### Example test
+
+This example uses Deno as the test runner, but you can use any test runner you prefer.
+
+```ts
+import { assertEquals } from "jsr:@std/assert";
+import { runGetLatestReleaseScript } from "jsr:@levibostian/decaf-sdk/testing";
+
+Deno.test("get latest release script returns expected output", async () => {
+  const { code, output, stdout } = await runGetLatestReleaseScript(
+    "deno run --allow-env --allow-read --allow-write my-script.ts",
+    {
+      gitCurrentBranch: "main",
+      gitRepoOwner: "username",
+      gitRepoName: "repo-name",
+      testMode: true,
+      gitCommitsCurrentBranch: [],
+      gitCommitsAllLocalBranches: {},
+    }
+  );
+
+  assertEquals(code, 0);
+  assertEquals(output?.versionName, "1.2.3");
+});
+```
+
+The test runner functions return:
+- `code` - The exit code from your script
+- `output` - The output that your script created and sent back to decaf
+- `stdout` - Script console output 
+
+### Available test runner functions
+
+The testing module exports the following functions:
+- `runGetLatestReleaseScript(command: string, input: GetLatestReleaseStepInput)` - Run a get latest release step script with the provided command and input data.
+- `runGetNextReleaseVersionScript(command: string, input: GetNextReleaseVersionStepInput)` - Run a get next release version step script with the provided command and input data.
+- `runDeployScript(command: string, input: DeployStepInput)` - Run a deploy step script with the provided command and input data.

@@ -1,26 +1,31 @@
 {
   "name": "@levibostian/decaf-sdk",
   "exports": {
-    ".": "./main.ts"
+    ".": "./main.ts",
+    "./testing": "./testing/mod.ts"
   },
   "publish": {
     "include": [
       "LICENSE",
       "README.md",
-      "*.ts",
+      "**/*.ts",
       "deno.json",
       "deno.lock"
     ],
     "exclude": [
-      "*.test.ts"
+      "**/*.test.ts"
     ]
   },
   "imports": {
-    "@cross/env": "jsr:@cross/env@^1.0.3"
+    "@cross/env": "jsr:@cross/env@^1.0.3",
+    "@cross/fs": "jsr:@cross/fs@^0.1.13",
+    "@cross/utils": "jsr:@cross/utils@^0.16.0",
+    "ansi-regex": "npm:ansi-regex@^6.2.2"
   },
   "tasks": {
-    "test": "deno test --allow-all --junit-path reports/junit.xml --coverage=reports/coverage/",
-    "lint": "deno lint --fix"
+    "test": "deno test --allow-all --junit-path reports/junit.xml --coverage=reports/coverage/ --coverage-raw-data-only && deno coverage reports/coverage/ --include=$(pwd)",
+    "format": "deno fmt",
+    "lint": "deno fmt && deno lint --fix"
   },
   "fmt": {
     "lineWidth": 150,
