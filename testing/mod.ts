@@ -19,7 +19,12 @@ export async function runGetLatestReleaseScript(
 
   const env = getEnvironmentVariables(inputFilePath, options)
 
-  const { code, output, stdout } = await runScript<GetLatestReleaseStepOutput>(runScriptShellCommand, env, options?.removeAnsiCodes)
+  const { code, output, stdout } = await runScript<GetLatestReleaseStepOutput>(
+    runScriptShellCommand,
+    env,
+    options?.removeAnsiCodes,
+    options?.displayStdout,
+  )
 
   return { code, output, stdout }
 }
@@ -33,7 +38,12 @@ export async function runGetNextReleaseVersionScript(
 
   const env = getEnvironmentVariables(inputFilePath, options)
 
-  const { code, output, stdout } = await runScript<GetNextReleaseVersionStepOutput>(runScriptShellCommand, env, options?.removeAnsiCodes)
+  const { code, output, stdout } = await runScript<GetNextReleaseVersionStepOutput>(
+    runScriptShellCommand,
+    env,
+    options?.removeAnsiCodes,
+    options?.displayStdout,
+  )
 
   return { code, output, stdout }
 }
@@ -47,13 +57,14 @@ export async function runDeployScript(
 
   const env = getEnvironmentVariables(inputFilePath, options)
 
-  const { code, stdout } = await runScript<unknown>(runScriptShellCommand, env, options?.removeAnsiCodes)
+  const { code, stdout } = await runScript<unknown>(runScriptShellCommand, env, options?.removeAnsiCodes, options?.displayStdout)
 
   return { code, stdout }
 }
 
 export interface RunScriptOptions {
   removeAnsiCodes?: boolean
+  displayStdout?: boolean
   extraEnvVariables?: Record<string, string>
 }
 
@@ -62,18 +73,6 @@ const writeInputToTempFile = async (input: unknown): Promise<string> => {
   const inputFileContents = JSON.stringify(input)
   await writeFile(tempFilePath, inputFileContents, "utf-8")
   return tempFilePath
-}
-
-const splitLines = (text: string): string[] => {
-  const normalized = text.replaceAll("\r\n", "\n")
-  const lines = normalized.split("\n")
-
-  // if the chunk ends with \n, last item is empty and should be ignored
-  if (lines.length > 0 && lines[lines.length - 1] === "") {
-    lines.pop()
-  }
-
-  return lines
 }
 
 const getEnvironmentVariables = (
@@ -92,6 +91,7 @@ async function runScript<TOutput>(
   runScriptShellCommand: string,
   env: Record<string, string>,
   removeAnsiCodes = true,
+  displayStdout = true,
 ): Promise<{ code: number; output: TOutput | null; stdout: string[] }> {
   const inputFilePath = env["DATA_FILE_PATH"]
   if (!inputFilePath) {
@@ -100,12 +100,43 @@ async function runScript<TOutput>(
 
   const inputFileContentsBeforeRun = await readFile(inputFilePath, "utf-8")
 
+  let accumulatedOutput = ""
+
+  const stdoutStream = new WritableStream({
+    write(chunk: Uint8Array) {
+      const text = new TextDecoder().decode(chunk)
+      if (displayStdout) {
+        console.log(text)
+      }
+
+      accumulatedOutput += text
+    },
+  })
+
+  const stderrStream = new WritableStream({
+    write(chunk: Uint8Array) {
+      const text = new TextDecoder().decode(chunk)
+      if (displayStdout) {
+        console.error(text)
+      }
+
+      accumulatedOutput += text
+    },
+  })
+
   // This code is the same idea as exec.ts in decaf.
   // Using 'sh -c' allows us to run complex commands that contain &&, |, >, etc.
-  // We append "2>&1" to preserve the relative ordering between stdout and stderr.
-  const { code, stdout } = await spawn(["sh", "-c", `${runScriptShellCommand} 2>&1`], env)
-
-  let combinedOutput = splitLines(stdout)
+  const { code } = await spawn(
+    ["sh", "-c", runScriptShellCommand],
+    env,
+    undefined, // cwd
+    {
+      stdin: null,
+      stdout: stdoutStream,
+      stderr: stderrStream,
+    },
+  )
+  let stdout = accumulatedOutput.split("\n")
 
   const outputFileContentsAfterRun = await readFile(inputFilePath, "utf-8")
   let output: TOutput | null = null
@@ -114,8 +145,14 @@ async function runScript<TOutput>(
   }
 
   if (removeAnsiCodes) {
-    combinedOutput = combinedOutput.map((line) => stripAnsi(line))
+    stdout = stdout.map((line) => stripAnsi(line))
   }
 
-  return { code, output, stdout: combinedOutput }
+  // Trim possible trailing empty line from stdout for convenience.
+  // otherwise, you will likely need to: assertEquals(getLatest.stdout, ["hello", ""]) in every test. I did it. it's annoying.
+  if (stdout.length > 0 && stdout[stdout.length - 1].trim() === "") {
+    stdout.pop()
+  }
+
+  return { code, output, stdout }
 }
