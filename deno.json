@@ -2,7 +2,7 @@
   "name": "@levibostian/decaf-sdk",
   "exports": {
     ".": "./main.ts",
-    "./testing:": "./testing/mod.ts"
+    "./testing": "./testing/mod.ts"
   },
   "publish": {
     "include": [
