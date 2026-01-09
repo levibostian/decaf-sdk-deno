@@ -1,7 +1,8 @@
 #!/usr/bin/env -S deno run --quiet --allow-all --no-lock
 
+// deno-lint-ignore-file no-import-prefix
 import { getLatestReleaseStepInput, setLatestReleaseStepOutput } from "../main.ts"
-import $ from "jsr:@david/dax"
+import $ from "jsr:@david/dax@0.44.2"
 
 const input = getLatestReleaseStepInput()
 

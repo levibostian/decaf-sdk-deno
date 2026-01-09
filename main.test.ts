@@ -1,17 +1,17 @@
 // deno-lint-ignore-file no-import-prefix
 import { assertEquals, assertThrows } from "jsr:@std/assert@1.0.16"
 import {
-  getLatestReleaseStepInput,
-  getNextReleaseVersionStepInput,
+  type DeployStepInput,
   getDeployStepInput,
+  type GetLatestReleaseStepInput,
+  getLatestReleaseStepInput,
+  type GetLatestReleaseStepOutput,
+  type GetNextReleaseVersionStepInput,
+  getNextReleaseVersionStepInput,
+  type GetNextReleaseVersionStepOutput,
+  type GitCommit,
   setLatestReleaseStepOutput,
   setNextReleaseVersionStepOutput,
-  type GetLatestReleaseStepInput,
-  type GetNextReleaseVersionStepInput,
-  type DeployStepInput,
-  type GetLatestReleaseStepOutput,
-  type GetNextReleaseVersionStepOutput,
-  type GitCommit
 } from "./main.ts"
 
 // Test data setup
@@ -23,11 +23,11 @@ const mockGitCommit: GitCommit = {
   messageLines: ["feat: add new feature", "", "This is a test commit message"],
   author: {
     name: "Test Author",
-    email: "test@example.com"
+    email: "test@example.com",
   },
   committer: {
-    name: "Test Committer", 
-    email: "committer@example.com"
+    name: "Test Committer",
+    email: "committer@example.com",
   },
   date: new Date("2025-08-21T12:00:00Z"),
   filesChanged: ["src/feature.ts", "README.md"],
@@ -40,12 +40,12 @@ const mockGitCommit: GitCommit = {
   stats: {
     additions: 10,
     deletions: 2,
-    total: 12
+    total: 12,
   },
   fileStats: [
     { filename: "src/feature.ts", additions: 8, deletions: 1 },
-    { filename: "README.md", additions: 2, deletions: 1 }
-  ]
+    { filename: "README.md", additions: 2, deletions: 1 },
+  ],
 }
 
 const mockLatestReleaseInput: GetLatestReleaseStepInput = {
@@ -56,22 +56,22 @@ const mockLatestReleaseInput: GetLatestReleaseStepInput = {
   gitCommitsCurrentBranch: [mockGitCommit],
   gitCommitsAllLocalBranches: {
     main: [mockGitCommit],
-    develop: []
-  }
+    develop: [],
+  },
 }
 
 const mockNextReleaseInput: GetNextReleaseVersionStepInput = {
   ...mockLatestReleaseInput,
   lastRelease: {
     versionName: "1.0.0",
-    commitSha: "prev123"
+    commitSha: "prev123",
   },
-  gitCommitsSinceLastRelease: [mockGitCommit]
+  gitCommitsSinceLastRelease: [mockGitCommit],
 }
 
 const mockDeployInput: DeployStepInput = {
   ...mockNextReleaseInput,
-  nextVersionName: "1.1.0"
+  nextVersionName: "1.1.0",
 }
 
 // Helper function to set up a temporary test environment
@@ -79,7 +79,7 @@ function setupTestEnvironment() {
   const originalDataFilePath = Deno.env.get("DATA_FILE_PATH")
   const tempDataFilePath = `/tmp/decaf-test-${Date.now()}-${Math.random().toString(36).substring(7)}.json`
   Deno.env.set("DATA_FILE_PATH", tempDataFilePath)
-  
+
   return {
     originalDataFilePath,
     tempDataFilePath,
@@ -89,13 +89,13 @@ function setupTestEnvironment() {
       } catch {
         // File might not exist, ignore error
       }
-      
+
       if (originalDataFilePath) {
         Deno.env.set("DATA_FILE_PATH", originalDataFilePath)
       } else {
         Deno.env.delete("DATA_FILE_PATH")
       }
-    }
+    },
   }
 }
 
@@ -103,7 +103,7 @@ function setupTestEnvironment() {
 
 Deno.test("getLatestReleaseStepInput() - should read and parse JSON data from file", () => {
   const testEnv = setupTestEnvironment()
-  
+
   try {
     // Arrange
     Deno.writeTextFileSync(testEnv.tempDataFilePath, JSON.stringify(mockLatestReleaseInput))
@@ -126,7 +126,7 @@ Deno.test("getLatestReleaseStepInput() - should read and parse JSON data from fi
 
 Deno.test("getLatestReleaseStepInput() - should throw error when DATA_FILE_PATH is not set", () => {
   const testEnv = setupTestEnvironment()
-  
+
   try {
     // Arrange
     Deno.env.delete("DATA_FILE_PATH")
@@ -135,7 +135,7 @@ Deno.test("getLatestReleaseStepInput() - should throw error when DATA_FILE_PATH 
     assertThrows(
       () => getLatestReleaseStepInput(),
       Error,
-      "DATA_FILE_PATH environment variable is not set."
+      "DATA_FILE_PATH environment variable is not set.",
     )
   } finally {
     testEnv.cleanup()
@@ -144,7 +144,7 @@ Deno.test("getLatestReleaseStepInput() - should throw error when DATA_FILE_PATH 
 
 Deno.test("getLatestReleaseStepInput() - should throw error when file does not exist", () => {
   const testEnv = setupTestEnvironment()
-  
+
   try {
     // Arrange
     Deno.env.set("DATA_FILE_PATH", "/nonexistent/path.json")
@@ -152,7 +152,7 @@ Deno.test("getLatestReleaseStepInput() - should throw error when file does not e
     // Act & Assert
     assertThrows(
       () => getLatestReleaseStepInput(),
-      Error
+      Error,
     )
   } finally {
     testEnv.cleanup()
@@ -163,7 +163,7 @@ Deno.test("getLatestReleaseStepInput() - should throw error when file does not e
 
 Deno.test("getNextReleaseVersionStepInput() - should read and parse JSON data from file", () => {
   const testEnv = setupTestEnvironment()
-  
+
   try {
     // Arrange
     Deno.writeTextFileSync(testEnv.tempDataFilePath, JSON.stringify(mockNextReleaseInput))
@@ -187,7 +187,7 @@ Deno.test("getNextReleaseVersionStepInput() - should read and parse JSON data fr
 
 Deno.test("getNextReleaseVersionStepInput() - should handle null lastRelease", () => {
   const testEnv = setupTestEnvironment()
-  
+
   try {
     // Arrange
     const inputWithNullRelease = { ...mockNextReleaseInput, lastRelease: null }
@@ -206,7 +206,7 @@ Deno.test("getNextReleaseVersionStepInput() - should handle null lastRelease", (
 
 Deno.test("getNextReleaseVersionStepInput() - should throw error when DATA_FILE_PATH is not set", () => {
   const testEnv = setupTestEnvironment()
-  
+
   try {
     // Arrange
     Deno.env.delete("DATA_FILE_PATH")
@@ -215,7 +215,7 @@ Deno.test("getNextReleaseVersionStepInput() - should throw error when DATA_FILE_
     assertThrows(
       () => getNextReleaseVersionStepInput(),
       Error,
-      "DATA_FILE_PATH environment variable is not set."
+      "DATA_FILE_PATH environment variable is not set.",
     )
   } finally {
     testEnv.cleanup()
@@ -226,7 +226,7 @@ Deno.test("getNextReleaseVersionStepInput() - should throw error when DATA_FILE_
 
 Deno.test("getDeployStepInput() - should read and parse JSON data from file", () => {
   const testEnv = setupTestEnvironment()
-  
+
   try {
     // Arrange
     Deno.writeTextFileSync(testEnv.tempDataFilePath, JSON.stringify(mockDeployInput))
@@ -249,7 +249,7 @@ Deno.test("getDeployStepInput() - should read and parse JSON data from file", ()
 
 Deno.test("getDeployStepInput() - should throw error when DATA_FILE_PATH is not set", () => {
   const testEnv = setupTestEnvironment()
-  
+
   try {
     // Arrange
     Deno.env.delete("DATA_FILE_PATH")
@@ -258,7 +258,7 @@ Deno.test("getDeployStepInput() - should throw error when DATA_FILE_PATH is not 
     assertThrows(
       () => getDeployStepInput(),
       Error,
-      "DATA_FILE_PATH environment variable is not set."
+      "DATA_FILE_PATH environment variable is not set.",
     )
   } finally {
     testEnv.cleanup()
@@ -269,12 +269,12 @@ Deno.test("getDeployStepInput() - should throw error when DATA_FILE_PATH is not 
 
 Deno.test("setLatestReleaseStepOutput() - should write JSON data to file", () => {
   const testEnv = setupTestEnvironment()
-  
+
   try {
     // Arrange
     const output: GetLatestReleaseStepOutput = {
       versionName: "2.0.0",
-      commitSha: "def456abc789"
+      commitSha: "def456abc789",
     }
 
     // Act
@@ -292,13 +292,13 @@ Deno.test("setLatestReleaseStepOutput() - should write JSON data to file", () =>
 
 Deno.test("setLatestReleaseStepOutput() - should overwrite existing file content", () => {
   const testEnv = setupTestEnvironment()
-  
+
   try {
     // Arrange
     Deno.writeTextFileSync(testEnv.tempDataFilePath, "existing content")
     const output: GetLatestReleaseStepOutput = {
       versionName: "3.0.0",
-      commitSha: "xyz789"
+      commitSha: "xyz789",
     }
 
     // Act
@@ -316,20 +316,20 @@ Deno.test("setLatestReleaseStepOutput() - should overwrite existing file content
 
 Deno.test("setLatestReleaseStepOutput() - should throw error when DATA_FILE_PATH is not set", () => {
   const testEnv = setupTestEnvironment()
-  
+
   try {
     // Arrange
     Deno.env.delete("DATA_FILE_PATH")
     const output: GetLatestReleaseStepOutput = {
       versionName: "2.0.0",
-      commitSha: "def456abc789"
+      commitSha: "def456abc789",
     }
 
     // Act & Assert
     assertThrows(
       () => setLatestReleaseStepOutput(output),
       Error,
-      "DATA_FILE_PATH environment variable is not set."
+      "DATA_FILE_PATH environment variable is not set.",
     )
   } finally {
     testEnv.cleanup()
@@ -340,11 +340,11 @@ Deno.test("setLatestReleaseStepOutput() - should throw error when DATA_FILE_PATH
 
 Deno.test("setNextReleaseVersionStepOutput() - should write JSON data to file", () => {
   const testEnv = setupTestEnvironment()
-  
+
   try {
     // Arrange
     const output: GetNextReleaseVersionStepOutput = {
-      version: "2.1.0"
+      version: "2.1.0",
     }
 
     // Act
@@ -361,12 +361,12 @@ Deno.test("setNextReleaseVersionStepOutput() - should write JSON data to file", 
 
 Deno.test("setNextReleaseVersionStepOutput() - should overwrite existing file content", () => {
   const testEnv = setupTestEnvironment()
-  
+
   try {
     // Arrange
     Deno.writeTextFileSync(testEnv.tempDataFilePath, '{"oldKey": "oldValue"}')
     const output: GetNextReleaseVersionStepOutput = {
-      version: "3.2.1"
+      version: "3.2.1",
     }
 
     // Act
@@ -384,19 +384,19 @@ Deno.test("setNextReleaseVersionStepOutput() - should overwrite existing file co
 
 Deno.test("setNextReleaseVersionStepOutput() - should throw error when DATA_FILE_PATH is not set", () => {
   const testEnv = setupTestEnvironment()
-  
+
   try {
     // Arrange
     Deno.env.delete("DATA_FILE_PATH")
     const output: GetNextReleaseVersionStepOutput = {
-      version: "2.1.0"
+      version: "2.1.0",
     }
 
     // Act & Assert
     assertThrows(
       () => setNextReleaseVersionStepOutput(output),
       Error,
-      "DATA_FILE_PATH environment variable is not set."
+      "DATA_FILE_PATH environment variable is not set.",
     )
   } finally {
     testEnv.cleanup()

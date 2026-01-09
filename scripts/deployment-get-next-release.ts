@@ -1,7 +1,8 @@
 #!/usr/bin/env -S deno run --quiet --allow-all --no-lock
 
+// deno-lint-ignore-file no-import-prefix
 import { getNextReleaseVersionStepInput, setNextReleaseVersionStepOutput } from "../main.ts"
-import * as semver from "jsr:@std/semver"
+import * as semver from "jsr:@std/semver@1.0.7"
 
 const input = getNextReleaseVersionStepInput()
 

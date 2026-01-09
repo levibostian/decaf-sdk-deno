@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-import-prefix
-import { assertEquals, assertNotEquals, assertRejects } from "jsr:@std/assert@1.0.16"
+import { assertEquals, assertNotEquals } from "jsr:@std/assert@1.0.16"
 import { runDeployScript, runGetLatestReleaseScript, runGetNextReleaseVersionScript } from "./mod.ts"
 
 const denoConfigPath = `${Deno.cwd()}/deno.json`
@@ -127,13 +127,13 @@ Deno.test("run scripts return code/output/stdout", async () => {
 
 Deno.test("unable to run shell command exits with non-zero code", async () => {
   const { code } = await runGetLatestReleaseScript("definitely-not-a-real-command-to-run", {
-      gitCurrentBranch: "main",
-      gitRepoOwner: "your-github-username",
-      gitRepoName: "your-repo-name",
-      testMode: true,
-      gitCommitsCurrentBranch: [],
-      gitCommitsAllLocalBranches: {},
-    })
+    gitCurrentBranch: "main",
+    gitRepoOwner: "your-github-username",
+    gitRepoName: "your-repo-name",
+    testMode: true,
+    gitCommitsCurrentBranch: [],
+    gitCommitsAllLocalBranches: {},
+  })
 
   assertNotEquals(code, 0)
 })
@@ -267,17 +267,17 @@ Deno.test("non-zero exit code returns the the exit code", async () => {
     Deno.exit(2);
   `)
 
-   const { code, stdout } = await runGetLatestReleaseScript(`deno run --allow-env "${scriptPath}"`, {
-      gitCurrentBranch: "main",
-      gitRepoOwner: "your-github-username",
-      gitRepoName: "your-repo-name",
-      testMode: true,
-      gitCommitsCurrentBranch: [],
-      gitCommitsAllLocalBranches: {},
-    })
+  const { code, stdout } = await runGetLatestReleaseScript(`deno run --allow-env "${scriptPath}"`, {
+    gitCurrentBranch: "main",
+    gitRepoOwner: "your-github-username",
+    gitRepoName: "your-repo-name",
+    testMode: true,
+    gitCommitsCurrentBranch: [],
+    gitCommitsAllLocalBranches: {},
+  })
 
-    assertEquals(code, 2)
-    assertEquals(stdout, ["exiting with code 2"])
+  assertEquals(code, 2)
+  assertEquals(stdout, ["exiting with code 2"])
 })
 
 Deno.test("options.removeAnsiCodes: false preserves ansi codes in stdout", async () => {
@@ -295,7 +295,7 @@ Deno.test("options.removeAnsiCodes: false preserves ansi codes in stdout", async
       gitCommitsCurrentBranch: [],
       gitCommitsAllLocalBranches: {},
     },
-    { removeAnsiCodes: false }
+    { removeAnsiCodes: false },
   )
 
   assertEquals(getLatestStdout, ["\u001b[31mred\u001b[0m"])
@@ -312,7 +312,7 @@ Deno.test("options.removeAnsiCodes: false preserves ansi codes in stdout", async
       lastRelease: null,
       gitCommitsSinceLastRelease: [],
     },
-    { removeAnsiCodes: false }
+    { removeAnsiCodes: false },
   )
 
   assertEquals(getNextStdout, ["\u001b[31mred\u001b[0m"])
@@ -330,7 +330,7 @@ Deno.test("options.removeAnsiCodes: false preserves ansi codes in stdout", async
       gitCommitsSinceLastRelease: [],
       nextVersionName: "1.0.0",
     },
-    { removeAnsiCodes: false }
+    { removeAnsiCodes: false },
   )
 
   assertEquals(deployStdout, ["\u001b[31mred\u001b[0m"])
@@ -357,7 +357,7 @@ Deno.test("options.extraEnvVariables passes custom environment variables to scri
         CUSTOM_VAR_1: "value1",
         CUSTOM_VAR_2: "value2",
       },
-    }
+    },
   )
 
   assertEquals(getLatestStdout, ["value1", "value2"])
@@ -379,7 +379,7 @@ Deno.test("options.extraEnvVariables passes custom environment variables to scri
         CUSTOM_VAR_1: "value1",
         CUSTOM_VAR_2: "value2",
       },
-    }
+    },
   )
 
   assertEquals(getNextStdout, ["value1", "value2"])
@@ -402,7 +402,7 @@ Deno.test("options.extraEnvVariables passes custom environment variables to scri
         CUSTOM_VAR_1: "value1",
         CUSTOM_VAR_2: "value2",
       },
-    }
+    },
   )
 
   assertEquals(deployStdout, ["value1", "value2"])
@@ -428,7 +428,7 @@ Deno.test("options: combining removeAnsiCodes and extraEnvVariables", async () =
       extraEnvVariables: {
         COLOR_VAR: "colored-output",
       },
-    }
+    },
   )
 
   assertEquals(stdout, ["\u001b[31mcolored-output\u001b[0m"])
@@ -453,9 +453,8 @@ Deno.test("options.extraEnvVariables can override default environment variables"
       extraEnvVariables: {
         INPUT_GITHUB_TOKEN: "custom-token-xyz",
       },
-    }
+    },
   )
 
   assertEquals(stdout, ["custom-token-xyz"])
 })
-

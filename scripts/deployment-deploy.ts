@@ -1,6 +1,7 @@
 #!/usr/bin/env -S deno run --quiet --allow-all --no-lock
 
-import $ from "jsr:@david/dax"
+// deno-lint-ignore-file no-import-prefix
+import $ from "jsr:@david/dax@0.44.2"
 import { getDeployStepInput } from "../main.ts"
 
 const input = getDeployStepInput()

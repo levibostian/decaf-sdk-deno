@@ -43,7 +43,7 @@ export async function runDeployScript(
   input: DeployStepInput,
   options?: RunScriptOptions,
 ): Promise<{ code: number; stdout: string[] }> {
-const inputFilePath = await writeInputToTempFile(input)
+  const inputFilePath = await writeInputToTempFile(input)
 
   const env = getEnvironmentVariables(inputFilePath, options)
 
@@ -119,4 +119,3 @@ async function runScript<TOutput>(
 
   return { code, output, stdout: combinedOutput }
 }
-
