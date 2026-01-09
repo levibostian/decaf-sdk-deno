@@ -19,14 +19,14 @@ jobs:
         with:
           deno-version: v2.x
       
-      - uses: levibostian/decaf@fix-main-branch-not-included
+      - uses: levibostian/decaf@0.9.2
         env:
           # required to use 'gh' CLI in my step scripts. 
           GH_TOKEN: ${{ github.token }}      
         with:
-          compile_binary: true
-          simulated_merge_type: 'rebase'
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          get_latest_release_current_branch: ./scripts/deployment-get-latest-release.ts
-          get_next_release_version: ./scripts/deployment-get-next-release.ts
-          deploy: ./scripts/deployment-deploy.ts
+          get_latest_release_current_branch: deno run --allow-all --quiet jsr:@levibostian/decaf-script-github-releases get
+          get_next_release_version: deno run --allow-all --quiet jsr:@levibostian/decaf-script-conventional-commits
+          deploy: |
+            deno run --allow-all --quiet jsr:@levibostian/decaf-script-jsr
+            deno run --allow-all --quiet jsr:@levibostian/decaf-script-github-releases set
