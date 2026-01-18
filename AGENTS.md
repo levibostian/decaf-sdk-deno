@@ -96,14 +96,14 @@ export const getLatestReleaseStepInput = (): GetLatestReleaseStepInput => {
 ### Naming Conventions
 - **Functions:** `camelCase` (e.g., `runGetLatestReleaseScript`)
 - **Interfaces/Types:** `PascalCase` (e.g., `GetLatestReleaseStepInput`)
-- **Constants:** `UPPER_SNAKE_CASE` for environment variables (e.g., `DATA_FILE_PATH`)
+- **Constants:** `UPPER_SNAKE_CASE` for environment variables (e.g., `DECAF_COMM_FILE_PATH`)
 - **Private functions:** `camelCase` with `const` (e.g., `const getInput = ...`)
 - **Exported vs private:** Only export what's needed in the public API
 
 ### Error Handling
 - Use clear error messages that explain what went wrong
 - Throw errors for unrecoverable conditions
-- Example: `throw new Error("DATA_FILE_PATH environment variable is not set.")`
+- Example: `throw new Error("DECAF_COMM_FILE_PATH environment variable is not set.")`
 
 ### Functions
 - **Arrow functions:** Use `const functionName = () => {}` for private functions

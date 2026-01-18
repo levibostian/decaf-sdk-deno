@@ -458,3 +458,24 @@ Deno.test("options.extraEnvVariables can override default environment variables"
 
   assertEquals(stdout, ["custom-token-xyz"])
 })
+
+Deno.test("testing module uses DECAF_COMM_FILE_PATH for backward compatibility", async () => {
+  const scriptPath = createScript(`
+    console.log(Deno.env.get("DECAF_COMM_FILE_PATH") ? "DECAF_COMM_FILE_PATH is set" : "not set");
+    console.log(Deno.env.get("DATA_FILE_PATH") ? "DATA_FILE_PATH is set" : "not set");
+  `)
+
+  const { stdout } = await runGetLatestReleaseScript(
+    `deno run --allow-env "${scriptPath}"`,
+    {
+      gitCurrentBranch: "main",
+      gitRepoOwner: "your-github-username",
+      gitRepoName: "your-repo-name",
+      testMode: true,
+      gitCommitsCurrentBranch: [],
+      gitCommitsAllLocalBranches: {},
+    },
+  )
+
+  assertEquals(stdout, ["DECAF_COMM_FILE_PATH is set", "DATA_FILE_PATH is set"])
+})
