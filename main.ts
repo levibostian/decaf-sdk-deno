@@ -216,8 +216,18 @@ export const getDeployStepInput = (): DeployStepInput => {
 }
 
 const getInput = <T>(): T => {
-  const filePath = getEnv("DATA_FILE_PATH")
-  if (!filePath) throw new Error("DATA_FILE_PATH environment variable is not set.")
+  // decaf 1.0 is going to use the environment variable DECAF_COMM_FILE_PATH.
+  // pre-1.0, it will support 2 environment variables: DATA_FILE_PATH and DECAF_COMM_FILE_PATH for backward compatibility.
+  //
+  // Just support both so the SDK is ready for decaf 1.0
+  // No need to log anything to the user about this behavior because the SDK is already abstracting this env var away so
+  // they dont care, as long as they update decaf to 1.0 eventually.
+  let filePath = getEnv("DECAF_COMM_FILE_PATH")
+  if (!filePath) {
+    filePath = getEnv("DATA_FILE_PATH")
+  }
+
+  if (!filePath) throw new Error("DECAF_COMM_FILE_PATH environment variable is not set.")
   const fileContents = nodeReadFileSync(filePath, "utf-8")
   return JSON.parse(fileContents)
 }
@@ -261,7 +271,10 @@ export const setNextReleaseVersionStepOutput = (output: GetNextReleaseVersionSte
 }
 
 const setOutput = (output: GetLatestReleaseStepOutput | GetNextReleaseVersionStepOutput): void => {
-  const filePath = getEnv("DATA_FILE_PATH")
-  if (!filePath) throw new Error("DATA_FILE_PATH environment variable is not set.")
+  let filePath = getEnv("DECAF_COMM_FILE_PATH")
+  if (!filePath) {
+    filePath = getEnv("DATA_FILE_PATH")
+  }
+  if (!filePath) throw new Error("DECAF_COMM_FILE_PATH environment variable is not set.")
   nodeWriteFileSync(filePath, JSON.stringify(output))
 }
