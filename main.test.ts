@@ -76,9 +76,9 @@ const mockDeployInput: DeployStepInput = {
 
 // Helper function to set up a temporary test environment
 function setupTestEnvironment() {
-  const originalDataFilePath = Deno.env.get("DATA_FILE_PATH")
+  const originalDataFilePath = Deno.env.get("DECAF_COMM_FILE_PATH")
   const tempDataFilePath = `/tmp/decaf-test-${Date.now()}-${Math.random().toString(36).substring(7)}.json`
-  Deno.env.set("DATA_FILE_PATH", tempDataFilePath)
+  Deno.env.set("DECAF_COMM_FILE_PATH", tempDataFilePath)
 
   return {
     originalDataFilePath,
@@ -90,11 +90,8 @@ function setupTestEnvironment() {
         // File might not exist, ignore error
       }
 
-      if (originalDataFilePath) {
-        Deno.env.set("DATA_FILE_PATH", originalDataFilePath)
-      } else {
-        Deno.env.delete("DATA_FILE_PATH")
-      }
+      Deno.env.delete("DATA_FILE_PATH")
+      Deno.env.delete("DECAF_COMM_FILE_PATH")
     },
   }
 }
@@ -124,30 +121,12 @@ Deno.test("getLatestReleaseStepInput() - should read and parse JSON data from fi
   }
 })
 
-Deno.test("getLatestReleaseStepInput() - should throw error when DATA_FILE_PATH is not set", () => {
-  const testEnv = setupTestEnvironment()
-
-  try {
-    // Arrange
-    Deno.env.delete("DATA_FILE_PATH")
-
-    // Act & Assert
-    assertThrows(
-      () => getLatestReleaseStepInput(),
-      Error,
-      "DATA_FILE_PATH environment variable is not set.",
-    )
-  } finally {
-    testEnv.cleanup()
-  }
-})
-
 Deno.test("getLatestReleaseStepInput() - should throw error when file does not exist", () => {
   const testEnv = setupTestEnvironment()
 
   try {
     // Arrange
-    Deno.env.set("DATA_FILE_PATH", "/nonexistent/path.json")
+    Deno.env.set("DECAF_COMM_FILE_PATH", "/nonexistent/path.json")
 
     // Act & Assert
     assertThrows(
@@ -204,24 +183,6 @@ Deno.test("getNextReleaseVersionStepInput() - should handle null lastRelease", (
   }
 })
 
-Deno.test("getNextReleaseVersionStepInput() - should throw error when DATA_FILE_PATH is not set", () => {
-  const testEnv = setupTestEnvironment()
-
-  try {
-    // Arrange
-    Deno.env.delete("DATA_FILE_PATH")
-
-    // Act & Assert
-    assertThrows(
-      () => getNextReleaseVersionStepInput(),
-      Error,
-      "DATA_FILE_PATH environment variable is not set.",
-    )
-  } finally {
-    testEnv.cleanup()
-  }
-})
-
 // Tests for getDeployStepInput()
 
 Deno.test("getDeployStepInput() - should read and parse JSON data from file", () => {
@@ -242,24 +203,6 @@ Deno.test("getDeployStepInput() - should read and parse JSON data from file", ()
     assertEquals(result.lastRelease?.versionName, "1.0.0")
     assertEquals(result.nextVersionName, "1.1.0")
     assertEquals(result.gitCommitsSinceLastRelease.length, 1)
-  } finally {
-    testEnv.cleanup()
-  }
-})
-
-Deno.test("getDeployStepInput() - should throw error when DATA_FILE_PATH is not set", () => {
-  const testEnv = setupTestEnvironment()
-
-  try {
-    // Arrange
-    Deno.env.delete("DATA_FILE_PATH")
-
-    // Act & Assert
-    assertThrows(
-      () => getDeployStepInput(),
-      Error,
-      "DATA_FILE_PATH environment variable is not set.",
-    )
   } finally {
     testEnv.cleanup()
   }
@@ -314,28 +257,6 @@ Deno.test("setLatestReleaseStepOutput() - should overwrite existing file content
   }
 })
 
-Deno.test("setLatestReleaseStepOutput() - should throw error when DATA_FILE_PATH is not set", () => {
-  const testEnv = setupTestEnvironment()
-
-  try {
-    // Arrange
-    Deno.env.delete("DATA_FILE_PATH")
-    const output: GetLatestReleaseStepOutput = {
-      versionName: "2.0.0",
-      commitSha: "def456abc789",
-    }
-
-    // Act & Assert
-    assertThrows(
-      () => setLatestReleaseStepOutput(output),
-      Error,
-      "DATA_FILE_PATH environment variable is not set.",
-    )
-  } finally {
-    testEnv.cleanup()
-  }
-})
-
 // Tests for setNextReleaseVersionStepOutput()
 
 Deno.test("setNextReleaseVersionStepOutput() - should write JSON data to file", () => {
@@ -382,22 +303,144 @@ Deno.test("setNextReleaseVersionStepOutput() - should overwrite existing file co
   }
 })
 
-Deno.test("setNextReleaseVersionStepOutput() - should throw error when DATA_FILE_PATH is not set", () => {
+// Backward compatibility tests for DATA_FILE_PATH
+
+Deno.test("getLatestReleaseStepInput() - should work with DATA_FILE_PATH for backward compatibility", () => {
   const testEnv = setupTestEnvironment()
 
   try {
     // Arrange
-    Deno.env.delete("DATA_FILE_PATH")
+    Deno.env.delete("DECAF_COMM_FILE_PATH")
+    Deno.env.set("DATA_FILE_PATH", testEnv.tempDataFilePath)
+    Deno.writeTextFileSync(testEnv.tempDataFilePath, JSON.stringify(mockLatestReleaseInput))
+
+    // Act
+    const result = getLatestReleaseStepInput()
+
+    // Assert
+    assertEquals(result.gitCurrentBranch, "main")
+    assertEquals(result.gitRepoOwner, "testowner")
+    assertEquals(result.gitRepoName, "testrepo")
+  } finally {
+    testEnv.cleanup()
+  }
+})
+
+Deno.test("getNextReleaseVersionStepInput() - should work with DATA_FILE_PATH for backward compatibility", () => {
+  const testEnv = setupTestEnvironment()
+
+  try {
+    // Arrange
+    Deno.env.delete("DECAF_COMM_FILE_PATH")
+    Deno.env.set("DATA_FILE_PATH", testEnv.tempDataFilePath)
+    Deno.writeTextFileSync(testEnv.tempDataFilePath, JSON.stringify(mockNextReleaseInput))
+
+    // Act
+    const result = getNextReleaseVersionStepInput()
+
+    // Assert
+    assertEquals(result.gitCurrentBranch, "main")
+    assertEquals(result.lastRelease?.versionName, "1.0.0")
+  } finally {
+    testEnv.cleanup()
+  }
+})
+
+Deno.test("getDeployStepInput() - should work with DATA_FILE_PATH for backward compatibility", () => {
+  const testEnv = setupTestEnvironment()
+
+  try {
+    // Arrange
+    Deno.env.delete("DECAF_COMM_FILE_PATH")
+    Deno.env.set("DATA_FILE_PATH", testEnv.tempDataFilePath)
+    Deno.writeTextFileSync(testEnv.tempDataFilePath, JSON.stringify(mockDeployInput))
+
+    // Act
+    const result = getDeployStepInput()
+
+    // Assert
+    assertEquals(result.gitCurrentBranch, "main")
+    assertEquals(result.nextVersionName, "1.1.0")
+  } finally {
+    testEnv.cleanup()
+  }
+})
+
+Deno.test("setLatestReleaseStepOutput() - should work with DATA_FILE_PATH for backward compatibility", () => {
+  const testEnv = setupTestEnvironment()
+
+  try {
+    // Arrange
+    Deno.env.delete("DECAF_COMM_FILE_PATH")
+    Deno.env.set("DATA_FILE_PATH", testEnv.tempDataFilePath)
+    const output: GetLatestReleaseStepOutput = {
+      versionName: "2.0.0",
+      commitSha: "def456abc789",
+    }
+
+    // Act
+    setLatestReleaseStepOutput(output)
+
+    // Assert
+    const fileContents = Deno.readTextFileSync(testEnv.tempDataFilePath)
+    const parsedOutput = JSON.parse(fileContents)
+    assertEquals(parsedOutput.versionName, "2.0.0")
+    assertEquals(parsedOutput.commitSha, "def456abc789")
+  } finally {
+    testEnv.cleanup()
+  }
+})
+
+Deno.test("setNextReleaseVersionStepOutput() - should work with DATA_FILE_PATH for backward compatibility", () => {
+  const testEnv = setupTestEnvironment()
+
+  try {
+    // Arrange
+    Deno.env.delete("DECAF_COMM_FILE_PATH")
+    Deno.env.set("DATA_FILE_PATH", testEnv.tempDataFilePath)
     const output: GetNextReleaseVersionStepOutput = {
       version: "2.1.0",
     }
 
-    // Act & Assert
-    assertThrows(
-      () => setNextReleaseVersionStepOutput(output),
-      Error,
-      "DATA_FILE_PATH environment variable is not set.",
-    )
+    // Act
+    setNextReleaseVersionStepOutput(output)
+
+    // Assert
+    const fileContents = Deno.readTextFileSync(testEnv.tempDataFilePath)
+    const parsedOutput = JSON.parse(fileContents)
+    assertEquals(parsedOutput.version, "2.1.0")
+  } finally {
+    testEnv.cleanup()
+  }
+})
+
+Deno.test("DECAF_COMM_FILE_PATH takes precedence over DATA_FILE_PATH", () => {
+  const testEnv = setupTestEnvironment()
+
+  try {
+    // Arrange
+    const tempDataFilePath2 = `/tmp/decaf-test-${Date.now()}-${Math.random().toString(36).substring(7)}-2.json`
+    Deno.env.set("DECAF_COMM_FILE_PATH", testEnv.tempDataFilePath)
+    Deno.env.set("DATA_FILE_PATH", tempDataFilePath2)
+
+    const input1 = { ...mockLatestReleaseInput, gitRepoOwner: "from-decaf-comm-file" }
+    const input2 = { ...mockLatestReleaseInput, gitRepoOwner: "from-data-file" }
+
+    Deno.writeTextFileSync(testEnv.tempDataFilePath, JSON.stringify(input1))
+    Deno.writeTextFileSync(tempDataFilePath2, JSON.stringify(input2))
+
+    // Act
+    const result = getLatestReleaseStepInput()
+
+    // Assert
+    assertEquals(result.gitRepoOwner, "from-decaf-comm-file")
+
+    // Cleanup
+    try {
+      Deno.removeSync(tempDataFilePath2)
+    } catch {
+      // ignore
+    }
   } finally {
     testEnv.cleanup()
   }

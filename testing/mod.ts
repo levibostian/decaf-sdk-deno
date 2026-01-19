@@ -82,7 +82,10 @@ const getEnvironmentVariables = (
   return {
     INPUT_GITHUB_TOKEN: "abcd1234",
     NO_COLOR: "1", // disable color output (ansi) for easier testing. https://docs.deno.com/api/deno/~/Deno.noColor
+    // setting both of the environment variables, for backward compatibility
+    // We can drop DATA_FILE_PATH support in v1.0
     DATA_FILE_PATH: inputFilePath,
+    DECAF_COMM_FILE_PATH: inputFilePath,
     ...(options?.extraEnvVariables ?? {}),
   }
 }
@@ -93,12 +96,7 @@ async function runScript<TOutput>(
   removeAnsiCodes = true,
   displayStdout = true,
 ): Promise<{ code: number; output: TOutput | null; stdout: string[] }> {
-  const inputFilePath = env["DATA_FILE_PATH"]
-  if (!inputFilePath) {
-    throw new Error("DATA_FILE_PATH environment variable is not set.")
-  }
-
-  const inputFileContentsBeforeRun = await readFile(inputFilePath, "utf-8")
+  const inputFileContentsBeforeRun = await readFile(env["DECAF_COMM_FILE_PATH"], "utf-8")
 
   let accumulatedOutput = ""
 
@@ -138,7 +136,7 @@ async function runScript<TOutput>(
   )
   let stdout = accumulatedOutput.split("\n")
 
-  const outputFileContentsAfterRun = await readFile(inputFilePath, "utf-8")
+  const outputFileContentsAfterRun = await readFile(env["DECAF_COMM_FILE_PATH"], "utf-8")
   let output: TOutput | null = null
   if (outputFileContentsAfterRun !== inputFileContentsBeforeRun) {
     output = JSON.parse(outputFileContentsAfterRun) as TOutput
