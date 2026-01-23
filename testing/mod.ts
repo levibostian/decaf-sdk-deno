@@ -24,6 +24,7 @@ export async function runGetLatestReleaseScript(
     env,
     options?.removeAnsiCodes,
     options?.displayStdout,
+    options?.currentWorkingDirectory,
   )
 
   return { code, output, stdout }
@@ -43,6 +44,7 @@ export async function runGetNextReleaseVersionScript(
     env,
     options?.removeAnsiCodes,
     options?.displayStdout,
+    options?.currentWorkingDirectory,
   )
 
   return { code, output, stdout }
@@ -57,7 +59,13 @@ export async function runDeployScript(
 
   const env = getEnvironmentVariables(inputFilePath, options)
 
-  const { code, stdout } = await runScript<unknown>(runScriptShellCommand, env, options?.removeAnsiCodes, options?.displayStdout)
+  const { code, stdout } = await runScript<unknown>(
+    runScriptShellCommand,
+    env,
+    options?.removeAnsiCodes,
+    options?.displayStdout,
+    options?.currentWorkingDirectory,
+  )
 
   return { code, stdout }
 }
@@ -66,6 +74,7 @@ export interface RunScriptOptions {
   removeAnsiCodes?: boolean
   displayStdout?: boolean
   extraEnvVariables?: Record<string, string>
+  currentWorkingDirectory?: string
 }
 
 const writeInputToTempFile = async (input: unknown): Promise<string> => {
@@ -95,6 +104,7 @@ async function runScript<TOutput>(
   env: Record<string, string>,
   removeAnsiCodes = true,
   displayStdout = true,
+  currentWorkingDirectory?: string,
 ): Promise<{ code: number; output: TOutput | null; stdout: string[] }> {
   const inputFileContentsBeforeRun = await readFile(env["DECAF_COMM_FILE_PATH"], "utf-8")
 
@@ -126,8 +136,8 @@ async function runScript<TOutput>(
   // Using 'sh -c' allows us to run complex commands that contain &&, |, >, etc.
   const { code } = await spawn(
     ["sh", "-c", runScriptShellCommand],
-    env,
-    undefined, // cwd
+    env, // env
+    currentWorkingDirectory, // cwd
     {
       stdin: null,
       stdout: stdoutStream,
