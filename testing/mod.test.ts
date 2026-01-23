@@ -479,3 +479,106 @@ Deno.test("testing module uses DECAF_COMM_FILE_PATH for backward compatibility",
 
   assertEquals(stdout, ["DECAF_COMM_FILE_PATH is set", "DATA_FILE_PATH is set"])
 })
+
+Deno.test("options.currentWorkingDirectory runs script in specified directory", async () => {
+  // Create a temp directory to use as the working directory
+  const tempDir = Deno.realPathSync(Deno.makeTempDirSync())
+
+  const scriptPath = createScript(`
+    console.log(Deno.cwd());
+  `)
+
+  const { stdout: getLatestStdout } = await runGetLatestReleaseScript(
+    `deno run --allow-env --allow-read "${scriptPath}"`,
+    {
+      gitCurrentBranch: "main",
+      gitRepoOwner: "your-github-username",
+      gitRepoName: "your-repo-name",
+      testMode: true,
+      gitCommitsCurrentBranch: [],
+      gitCommitsAllLocalBranches: {},
+    },
+    {
+      currentWorkingDirectory: tempDir,
+    },
+  )
+
+  assertEquals(getLatestStdout, [tempDir])
+
+  const { stdout: getNextStdout } = await runGetNextReleaseVersionScript(
+    `deno run --allow-env --allow-read "${scriptPath}"`,
+    {
+      gitCurrentBranch: "main",
+      gitRepoOwner: "your-github-username",
+      gitRepoName: "your-repo-name",
+      testMode: true,
+      gitCommitsCurrentBranch: [],
+      gitCommitsAllLocalBranches: {},
+      lastRelease: null,
+      gitCommitsSinceLastRelease: [],
+    },
+    {
+      currentWorkingDirectory: tempDir,
+    },
+  )
+
+  assertEquals(getNextStdout, [tempDir])
+
+  const { stdout: deployStdout } = await runDeployScript(
+    `deno run --allow-env --allow-read "${scriptPath}"`,
+    {
+      gitCurrentBranch: "main",
+      gitRepoOwner: "your-github-username",
+      gitRepoName: "your-repo-name",
+      testMode: true,
+      gitCommitsCurrentBranch: [],
+      gitCommitsAllLocalBranches: {},
+      lastRelease: null,
+      gitCommitsSinceLastRelease: [],
+      nextVersionName: "1.0.0",
+    },
+    {
+      currentWorkingDirectory: tempDir,
+    },
+  )
+
+  assertEquals(deployStdout, [tempDir])
+
+  // Clean up
+  Deno.removeSync(tempDir, { recursive: true })
+})
+
+Deno.test("options.currentWorkingDirectory supports relative paths", async () => {
+  // Create a subdirectory relative to the current working directory
+  const originalCwd = Deno.cwd()
+  const relativeDir = "temp-test-subdir"
+  const absoluteDir = `${originalCwd}/${relativeDir}`
+
+  // Create the directory if it doesn't exist
+  Deno.mkdirSync(absoluteDir, { recursive: true })
+
+  const scriptPath = createScript(`
+    console.log(Deno.cwd());
+  `)
+
+  const { stdout } = await runGetLatestReleaseScript(
+    `deno run --allow-env --allow-read "${scriptPath}"`,
+    {
+      gitCurrentBranch: "main",
+      gitRepoOwner: "your-github-username",
+      gitRepoName: "your-repo-name",
+      testMode: true,
+      gitCommitsCurrentBranch: [],
+      gitCommitsAllLocalBranches: {},
+    },
+    {
+      currentWorkingDirectory: relativeDir,
+    },
+  )
+
+  // The script should have run in the absolute path of the relative directory
+  assertEquals(stdout, [absoluteDir])
+
+  // Clean up
+  Deno.removeSync(absoluteDir, { recursive: true })
+})

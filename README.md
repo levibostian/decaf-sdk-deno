@@ -77,6 +77,16 @@ The test runner functions return:
 ### Available test runner functions
 
 The testing module exports the following functions:
-- `runGetLatestReleaseScript(command: string, input: GetLatestReleaseStepInput)` - Run a get latest release step script with the provided command and input data.
-- `runGetNextReleaseVersionScript(command: string, input: GetNextReleaseVersionStepInput)` - Run a get next release version step script with the provided command and input data.
-- `runDeployScript(command: string, input: DeployStepInput)` - Run a deploy step script with the provided command and input data.
+- `runGetLatestReleaseScript(command: string, input: GetLatestReleaseStepInput, options?: RunScriptOptions)` - Run a get latest release step script with the provided command and input data.
+- `runGetNextReleaseVersionScript(command: string, input: GetNextReleaseVersionStepInput, options?: RunScriptOptions)` - Run a get next release version step script with the provided command and input data.
+- `runDeployScript(command: string, input: DeployStepInput, options?: RunScriptOptions)` - Run a deploy step script with the provided command and input data.
+
+### RunScriptOptions
+
+The `RunScriptOptions` interface allows you to customize the behavior of the test runner functions. It includes the following properties:
+- `removeAnsiCodes?: boolean` - If true, ANSI codes will be removed from the script output. Default is true. This makes assertions/snapshot tests more human readable.
+- `displayStdout?: boolean` - If true, the script's stdout will be displayed in the console during the test run. Default is true.
+- `extraEnvVariables?: Record<string, string>` - Additional environment variables to pass to the script during execution. 
+- `currentWorkingDirectory?: string` - The current working directory to run the script in. This is intended to match the behavior of `current_working_directory` config option added in decaf 0.11.0
+
+
