@@ -582,3 +582,72 @@ Deno.test("options.currentWorkingDirectory supports relative paths", async () =>
   // Clean up
   Deno.removeSync(absoluteDir, { recursive: true })
 })
+
+Deno.test("expect DECAF_ROOT_WORKING_DIRECTORY set automatically by testing module", async () => {
+  // Create a temp directory to use as the working directory
+  const tempDir = Deno.realPathSync(Deno.makeTempDirSync())
+  const expectedRootWorkingDirectory = Deno.cwd()
+
+  const scriptPath = createScript(`
+    console.log(Deno.env.get("DECAF_ROOT_WORKING_DIRECTORY"));
+  `)
+
+  const { stdout: getLatestStdout } = await runGetLatestReleaseScript(
+    `deno run --allow-env --allow-read "${scriptPath}"`,
+    {
+      gitCurrentBranch: "main",
+      gitRepoOwner: "your-github-username",
+      gitRepoName: "your-repo-name",
+      testMode: true,
+      gitCommitsCurrentBranch: [],
+      gitCommitsAllLocalBranches: {},
+    },
+    {
+      currentWorkingDirectory: tempDir,
+    },
+  )
+
+  assertEquals(getLatestStdout, [expectedRootWorkingDirectory])
+
+  const { stdout: getNextStdout } = await runGetNextReleaseVersionScript(
+    `deno run --allow-env --allow-read "${scriptPath}"`,
+    {
+      gitCurrentBranch: "main",
+      gitRepoOwner: "your-github-username",
+      gitRepoName: "your-repo-name",
+      testMode: true,
+      gitCommitsCurrentBranch: [],
+      gitCommitsAllLocalBranches: {},
+      lastRelease: null,
+      gitCommitsSinceLastRelease: [],
+    },
+    {
+      currentWorkingDirectory: tempDir,
+    },
+  )
+
+  assertEquals(getNextStdout, [expectedRootWorkingDirectory])
+
+  const { stdout: deployStdout } = await runDeployScript(
+    `deno run --allow-env --allow-read "${scriptPath}"`,
+    {
+      gitCurrentBranch: "main",
+      gitRepoOwner: "your-github-username",
+      gitRepoName: "your-repo-name",
+      testMode: true,
+      gitCommitsCurrentBranch: [],
+      gitCommitsAllLocalBranches: {},
+      lastRelease: null,
+      gitCommitsSinceLastRelease: [],
+      nextVersionName: "1.0.0",
+    },
+    {
+      currentWorkingDirectory: tempDir,
+    },
+  )
+
+  assertEquals(deployStdout, [expectedRootWorkingDirectory])
+
+  // Clean up
+  Deno.removeSync(tempDir, { recursive: true })
+})
