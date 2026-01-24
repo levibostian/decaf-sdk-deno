@@ -95,6 +95,8 @@ const getEnvironmentVariables = (
     // We can drop DATA_FILE_PATH support in v1.0
     DATA_FILE_PATH: inputFilePath,
     DECAF_COMM_FILE_PATH: inputFilePath,
+    // Automatically set DECAF_ROOT_WORKING_DIRECTORY to mirror production behavior
+    DECAF_ROOT_WORKING_DIRECTORY: Deno.cwd(),
     ...(options?.extraEnvVariables ?? {}),
   }
 }
