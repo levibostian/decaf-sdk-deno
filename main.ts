@@ -106,6 +106,8 @@ export interface GetLatestReleaseStepInput {
   gitRepoOwner: string
   /** The name of the Git repository */
   gitRepoName: string
+  /** The root directory of the codebase that is being deployed */
+  gitRootDirectory: string
   /** Whether the step is running in test mode (affects behavior) */
   testMode: boolean
   /** Array of all commits in the current branch */
